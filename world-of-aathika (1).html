@@ -1,0 +1,773 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>The World of Aathika</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,400;1,500&family=Montserrat:wght@200;300;400;500&display=swap" rel="stylesheet">
+<style>
+/* ============ TOKENS ============ */
+:root{
+  --black:#050303;
+  --wine:#4A0F18;
+  --burgundy:#240006;
+  --gold:#D4AF37;
+  --gold-soft:#e6cd8a;
+  --champagne:#F7E7CE;
+  --ivory:#FFF8F0;
+  --ease: cubic-bezier(.22,.7,.2,1);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{
+  background:
+    radial-gradient(ellipse at 50% 0%, rgba(212,175,55,.08), transparent 55%),
+    linear-gradient(165deg, var(--wine) 0%, var(--burgundy) 55%, var(--black) 100%);
+  color:var(--gold-soft);
+  font-family:'Montserrat',sans-serif;
+  font-weight:300;
+  overflow:hidden;
+  height:100%;
+  width:100%;
+  letter-spacing:.02em;
+}
+h1,h2,h3,.serif{
+  font-family:'Cormorant Garamond',serif;
+  font-weight:400;
+  letter-spacing:.06em;
+}
+::selection{background:var(--gold);color:var(--black);}
+a{color:inherit;}
+button{font-family:inherit;background:none;border:none;color:inherit;cursor:pointer;}
+
+/* ============ CURSOR ============ */
+#cursor{
+  position:fixed; top:0; left:0; width:26px; height:26px;
+  border:1px solid var(--gold); border-radius:50%;
+  pointer-events:none; z-index:9999; mix-blend-mode:screen;
+  transform:translate(-50%,-50%);
+  transition:width .3s var(--ease), height .3s var(--ease), opacity .3s;
+  box-shadow:0 0 14px 1px rgba(212,175,55,.35);
+  opacity:.9;
+}
+#cursor.hover{width:46px;height:46px;background:rgba(212,175,55,.08);}
+@media (hover:none), (pointer:coarse){ #cursor{display:none;} }
+
+/* ============ PARTICLE CANVAS ============ */
+#dust{position:fixed; inset:0; z-index:2; pointer-events:none;}
+
+/* ============ APP / SCENES ============ */
+#app{position:relative; width:100%; height:100%;}
+.scene{
+  position:absolute; inset:0;
+  display:flex; align-items:center; justify-content:center;
+  flex-direction:column;
+  opacity:0; visibility:hidden;
+  transition:opacity 1.4s var(--ease), filter 1.4s var(--ease);
+  filter:blur(6px);
+  text-align:center;
+  padding:6vh 6vw;
+  overflow:hidden;
+}
+.scene.active{opacity:1; visibility:visible; filter:blur(0); z-index:5;}
+.scene-bg{position:absolute; inset:0; z-index:0;}
+.scene > *:not(.scene-bg){position:relative; z-index:1;}
+
+/* subtle vignette used across scenes */
+.vignette{position:absolute; inset:0; z-index:0;
+  background:radial-gradient(ellipse at center, transparent 30%, var(--black) 95%);
+}
+
+/* ============ SOUND TOGGLE ============ */
+#sound-toggle{
+  position:fixed; top:clamp(14px,3vw,28px); right:clamp(14px,3vw,28px); z-index:60;
+  width:44px; height:44px; border-radius:50%;
+  border:1px solid rgba(212,175,55,.35);
+  display:flex; align-items:center; justify-content:center;
+  color:var(--gold); font-size:15px;
+  transition:all .4s var(--ease);
+  opacity:0; pointer-events:none;
+}
+#sound-toggle.show{opacity:1; pointer-events:auto;}
+#sound-toggle:hover{background:rgba(212,175,55,.08); box-shadow:0 0 16px rgba(212,175,55,.3);}
+
+/* ============ GENERIC LABELS/BUTTONS ============ */
+.eyebrow{
+  font-size:clamp(10px,1.2vw,12px); letter-spacing:.35em; text-transform:uppercase;
+  color:var(--gold); margin-bottom:18px; opacity:.85;
+}
+.glass-btn{
+  margin-top:44px; padding:16px 46px; min-height:48px;
+  border:1px solid var(--gold); border-radius:2px;
+  background:rgba(212,175,55,.05); backdrop-filter:blur(6px);
+  color:var(--gold-soft); font-family:'Cormorant Garamond',serif;
+  font-size:clamp(14px,1.6vw,17px); letter-spacing:.3em; text-transform:uppercase;
+  transition:all .6s var(--ease);
+}
+.glass-btn:hover{background:rgba(212,175,55,.15); box-shadow:0 0 30px rgba(212,175,55,.25); letter-spacing:.4em;}
+
+/* ============ SCENE 1 — OPENING ============ */
+#opening-lines{position:absolute; inset:0;}
+#scene-opening .line{
+  position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+  width:max-content; max-width:88vw;
+  font-family:'Cormorant Garamond',serif; font-style:italic;
+  font-size:clamp(26px,6vw,54px); color:var(--gold-soft); opacity:0;
+  line-height:1.35; text-align:center;
+}
+#scene-opening .line.reveal{
+  font-style:normal; letter-spacing:.15em; color:var(--gold);
+  font-size:clamp(46px,13vw,120px); text-shadow:0 0 40px rgba(212,175,55,.4);
+}
+
+/* ============ SCENE — ENCHANTED GARDEN (iframe) ============ */
+#garden-frame{display:block;}
+
+/* ============ LIQUID GLASS MESSAGE PANEL ============ */
+.glass-panel{
+  position:fixed; left:50%; top:50%; transform:translate(-50%,-50%) scale(.94);
+  z-index:40; width:min(92vw,560px); max-height:82vh;
+  border-radius:26px; padding:2px;
+  background:linear-gradient(135deg, rgba(212,175,55,.55), rgba(247,231,206,.12) 40%, rgba(212,175,55,.35));
+  opacity:0; pointer-events:none; visibility:hidden;
+  transition:opacity .9s var(--ease), transform .9s var(--ease), visibility 0s linear .9s;
+  box-shadow:0 40px 100px rgba(0,0,0,.55);
+}
+.glass-panel.show{opacity:1; pointer-events:auto; visibility:visible; transform:translate(-50%,-50%) scale(1); transition:opacity .9s var(--ease), transform .9s var(--ease);}
+.glass-panel-inner{
+  position:relative; height:100%; max-height:calc(82vh - 4px); overflow-y:auto;
+  border-radius:24px; padding:clamp(28px,5vw,46px) clamp(24px,5vw,40px);
+  background:linear-gradient(160deg, rgba(74,15,24,.62), rgba(5,3,3,.72));
+  backdrop-filter:blur(22px) saturate(160%);
+  -webkit-backdrop-filter:blur(22px) saturate(160%);
+}
+.glass-panel-inner::before{
+  content:''; position:absolute; inset:0; border-radius:24px; pointer-events:none;
+  background:linear-gradient(115deg, rgba(255,255,255,.14) 0%, transparent 30%, transparent 70%, rgba(212,175,55,.12) 100%);
+  mix-blend-mode:overlay;
+}
+.glass-panel h3{
+  font-size:clamp(24px,4vw,34px); color:var(--gold); text-align:center; margin-bottom:22px;
+  text-shadow:0 0 24px rgba(212,175,55,.35);
+}
+.glass-panel p{
+  font-family:'Montserrat',sans-serif; font-weight:300; font-size:clamp(14px,1.8vw,16px);
+  line-height:1.85; color:var(--ivory); text-align:left; margin-bottom:16px;
+}
+.glass-panel .ps-divider{
+  width:56px; height:1px; margin:22px auto 20px;
+  background:linear-gradient(90deg, transparent, rgba(212,175,55,.6), transparent);
+}
+.glass-panel p.ps{
+  font-style:italic; color:var(--gold-soft); text-align:left;
+  font-size:clamp(13px,1.7vw,15px); line-height:1.8;
+}
+.glass-panel p.wishes{
+  font-family:'Cormorant Garamond',serif; font-style:italic; color:var(--gold);
+  text-align:center; font-size:clamp(16px,2.2vw,20px); margin-top:18px; margin-bottom:4px;
+  text-shadow:0 0 18px rgba(212,175,55,.3);
+}
+.glass-close{
+  position:absolute; top:14px; right:14px; width:40px; height:40px; z-index:2;
+  border-radius:50%; display:flex; align-items:center; justify-content:center;
+  color:var(--gold-soft); font-size:20px; font-family:'Cormorant Garamond',serif;
+  border:1px solid rgba(212,175,55,.4); transition:all .4s var(--ease);
+}
+.glass-close:hover{background:rgba(212,175,55,.15); color:var(--gold);}
+
+/* ============ BEGIN AGAIN ============ */
+.replay{
+  font-size:10px; letter-spacing:.3em; text-transform:uppercase;
+  color:rgba(247,231,206,.55); min-height:44px; padding:10px 16px;
+  border:1px solid rgba(212,175,55,.3); border-radius:2px;
+  background:rgba(5,3,3,.35); backdrop-filter:blur(6px);
+  transition:all .5s var(--ease);
+}
+.replay:hover{color:var(--gold); border-color:var(--gold); background:rgba(212,175,55,.1);}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce){
+  *{animation-duration:.001ms !important; animation-iteration-count:1 !important; transition-duration:.3s !important;}
+}
+</style>
+</head>
+
+<body>
+
+<canvas id="dust"></canvas>
+<div id="cursor"></div>
+
+<button id="sound-toggle" aria-label="Toggle music">♪</button>
+<audio id="bg-music" src="piano.mp3" loop preload="auto"></audio>
+
+<div id="app">
+
+  <!-- 1 OPENING -->
+  <section class="scene active" id="scene-opening">
+    <div id="opening-lines"></div>
+  </section>
+
+  <!-- 2 ENCHANTED GARDEN -->
+  <section class="scene" id="scene-garden">
+    <iframe id="garden-frame" title="The Enchanted Garden" style="position:absolute; inset:0; width:100%; height:100%; border:none; z-index:1; background:#000;"></iframe>
+    <button class="replay" id="btn-replay" style="position:absolute; bottom:clamp(20px,4vh,40px); left:50%; transform:translateX(-50%); z-index:3;">Begin Again</button>
+
+    <div class="glass-panel" id="birthday-panel">
+      <div class="glass-panel-inner">
+        <button class="glass-close" id="birthday-panel-close" aria-label="Close message">&times;</button>
+        <h3>Happy Birthday, Aathika!! 🥳🎉</h3>
+        <p>Congratulations on becoming even older. I know you're going to remind me that for the next eternity that you're older than me, wiser than me, and somehow always right... even when you're very obviously not. 😉🤣</p>
+        <p>I genuinely don't think I've ever met someone who hates giving up as much as you do. You could lose an argument that you started, with proof right in front of you, and you'd still find a way to say, "No, actually..." which is a good thing if you take it in one way 😂</p>
+        <p>I hope this year brings you everything your expensive taste demands; more jewelry, more makeup, more cars to obsess over, and maybe Ferrari making the right strategy for once. 🤣🤣🤣</p>
+        <p>Thanks for always being the most appreciative person I know.🫂💗</p>
+        <p>You're honestly like the annoying older sister I never asked for... but wouldn't trade for anything.</p>
+        <p>Now go enjoy your day old lady... and before you say it</p>
+        <p>Yes, yes... I know you're older than me. You don't have to remind me for the 1000th time. 🙄🎂🏁</p>
+        <div class="ps-divider"></div>
+        <p class="ps">ps: you'ld make a great doctor one day!!! 👩‍⚕️🩺 anddd never stop working towards your dreams cause that yatch is not a fantasy if other people actually do have it ✨</p>
+        <p class="wishes">✨✨ Best wishes mate, have the best birthday everrrrrrrrr 🥳🥳🎂🎂</p>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<script>
+(function(){
+  "use strict";
+  const isMobile = window.matchMedia('(pointer:coarse)').matches || window.innerWidth < 700;
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* ---------------- CUSTOM CURSOR ---------------- */
+  if(!isMobile){
+    const cursor = document.getElementById('cursor');
+    let cx=window.innerWidth/2, cy=window.innerHeight/2, tx=cx, ty=cy;
+    window.addEventListener('mousemove', e=>{tx=e.clientX; ty=e.clientY;});
+    function loop(){ cx += (tx-cx)*0.18; cy += (ty-cy)*0.18; cursor.style.transform=`translate(${cx}px,${cy}px) translate(-50%,-50%)`; requestAnimationFrame(loop); }
+    loop();
+    document.addEventListener('mouseover', e=>{
+      if(e.target.closest('button,a')) cursor.classList.add('hover');
+    });
+    document.addEventListener('mouseout', e=>{
+      if(e.target.closest('button,a')) cursor.classList.remove('hover');
+    });
+  } else {
+    document.getElementById('cursor').style.display='none';
+  }
+
+  /* ---------------- GOLD DUST PARTICLES ---------------- */
+  const canvas = document.getElementById('dust');
+  const ctx = canvas.getContext('2d');
+  let W,H;
+  function resize(){ W=canvas.width=window.innerWidth; H=canvas.height=window.innerHeight; }
+  resize(); window.addEventListener('resize', resize);
+  const count = isMobile ? 22 : 55;
+  const particles = Array.from({length:count}, ()=>spawn());
+  function spawn(){
+    return {
+      x: Math.random()*W, y: Math.random()*H,
+      r: Math.random()*1.6+0.4,
+      vy: -(Math.random()*0.18+0.03),
+      vx: (Math.random()-0.5)*0.08,
+      o: Math.random()*0.5+0.15,
+      blur: Math.random()>0.6
+    };
+  }
+  function drawDust(){
+    ctx.clearRect(0,0,W,H);
+    particles.forEach(p=>{
+      p.x+=p.vx; p.y+=p.vy;
+      if(p.y<-10){p.y=H+10; p.x=Math.random()*W;}
+      if(p.x<-10) p.x=W+10; if(p.x>W+10) p.x=-10;
+      ctx.beginPath();
+      ctx.globalAlpha = p.o;
+      ctx.fillStyle = '#D4AF37';
+      if(p.blur){ ctx.filter='blur(1.4px)'; } else { ctx.filter='none'; }
+      ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+      ctx.fill();
+    });
+    ctx.globalAlpha=1; ctx.filter='none';
+    requestAnimationFrame(drawDust);
+  }
+  drawDust();
+
+  /* ---------------- BACKGROUND MUSIC ---------------- */
+  let soundOn = false;
+  const bgMusic = document.getElementById('bg-music');
+  bgMusic.volume = 0.55;
+  const soundBtn = document.getElementById('sound-toggle');
+  soundBtn.classList.add('show');
+
+  function setSoundUI(on){
+    soundOn = on;
+    soundBtn.style.opacity = soundOn ? 1 : .55;
+    soundBtn.textContent = soundOn ? '♪' : '♪̶';
+  }
+
+  function tryAutoplay(){
+    const p = bgMusic.play();
+    if(p !== undefined){
+      p.then(()=> setSoundUI(true)).catch(()=>{
+        // Autoplay blocked — start on the very first interaction instead
+        const startOnInteract = ()=>{
+          bgMusic.play().then(()=> setSoundUI(true)).catch(()=>{});
+          ['click','touchstart','keydown'].forEach(evt=> document.removeEventListener(evt, startOnInteract));
+        };
+        ['click','touchstart','keydown'].forEach(evt=> document.addEventListener(evt, startOnInteract, {once:true}));
+      });
+    }
+  }
+  tryAutoplay();
+
+  soundBtn.addEventListener('click', ()=>{
+    soundOn = !soundOn;
+    if(soundOn){ bgMusic.play().catch(()=>{}); }
+    else { bgMusic.pause(); }
+    setSoundUI(soundOn);
+  });
+
+  /* ---------------- SCENE MACHINE ---------------- */
+  const order = ['scene-opening','scene-garden'];
+
+  let current = 'scene-opening';
+  function goTo(id){
+    document.getElementById(current).classList.remove('active');
+    current = id;
+    document.getElementById(current).classList.add('active');
+    if(id === 'scene-garden'){ showBirthdayPanel(); }
+  }
+
+  /* ---------------- 0: OPENING (runs immediately, no loading screen) ---------------- */
+  runOpening();
+
+  function runOpening(){
+    const host = document.getElementById('opening-lines');
+    const seq = [
+      {t:"Midnight...<br>has arrived.", hold:3600},
+      {t:"A new chapter...<br>begins.", hold:3600},
+      {t:"JULY 17", hold:2800},
+      {t:"Happy Birthday,", hold:2800},
+      {t:"AATHIKA", hold:4200, big:true}
+    ];
+    let delay = 500;
+    seq.forEach((line,i)=>{
+      setTimeout(()=>{
+        host.querySelectorAll('.line').forEach(l=>l.style.opacity=0);
+        const div = document.createElement('div');
+        div.className = 'line' + (line.big ? ' reveal' : '');
+        div.innerHTML = line.t;
+        host.appendChild(div);
+        requestAnimationFrame(()=>{ div.style.transition='opacity 2.6s ease'; div.style.opacity=1; });
+      }, delay);
+      delay += line.hold;
+    });
+    setTimeout(()=> goTo('scene-garden'), delay + 1000);
+  }
+
+  /* ---------------- LIQUID GLASS BIRTHDAY PANEL ---------------- */
+  let panelShown = false;
+  function showBirthdayPanel(){
+    if(panelShown) return; panelShown = true;
+    setTimeout(()=> document.getElementById('birthday-panel').classList.add('show'), 900);
+  }
+  document.getElementById('birthday-panel-close').addEventListener('click', ()=>{
+    document.getElementById('birthday-panel').classList.remove('show');
+  });
+
+  /* ---------------- 1: ENCHANTED GARDEN (uploaded three.js scene) ---------------- */
+  const GARDEN_HTML = `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Enchanted Garden</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"><\/script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"><\/script>
+    <style>
+        body { margin: 0; padding: 0; overflow: hidden; background: #000; }
+        #ui {
+            position: absolute;
+            bottom: 40px;
+            width: 100%;
+            text-align: center;
+            color: #fff;
+            font-family: 'Georgia', serif;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            font-size: 11px;
+            pointer-events: none;
+            opacity: 0.6;
+            z-index: 10;
+            text-shadow: 0 0 10px rgba(0,0,0,1);
+        }
+        canvas { display: block; }
+    </style>
+</head>
+<body>
+
+    <div id="ui">Drag to turn • Tap to bloom</div>
+
+    <script>
+        let scene, camera, renderer, clock, controls;
+        let flowers = [];
+        let grassBlades = [];
+        let nebulaParticles, starField, shootingStar;
+        const raycaster = new THREE.Raycaster();
+        const mouse = new THREE.Vector2();
+
+        function init() {
+            scene = new THREE.Scene();
+            scene.fog = new THREE.FogExp2(0x020208, 0.012);
+
+            camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 2000);
+            camera.position.set(0, 15, 35);
+
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(window.devicePixelRatio);
+            renderer.setClearColor(0x010105);
+            renderer.toneMapping = THREE.ACESFilmicToneMapping;
+            renderer.exposure = 1.5;
+            document.body.appendChild(renderer.domElement);
+
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+            controls.maxPolarAngle = Math.PI / 2.1; 
+            controls.minDistance = 5;
+            controls.maxDistance = 150;
+
+            clock = new THREE.Clock();
+
+            scene.add(new THREE.AmbientLight(0x222244, 1.5));
+            const rimLight = new THREE.DirectionalLight(0x7777ff, 1);
+            rimLight.position.set(20, 50, 20);
+            scene.add(rimLight);
+
+            createFlashyBackground();
+            createGround();
+            createGrass();
+
+            window.addEventListener('click', onPointer);
+            window.addEventListener('touchstart', (e) => {
+                if(e.touches.length === 1) onPointer(e.touches[0]);
+            });
+            window.addEventListener('resize', onResize);
+
+            createFlower(new THREE.Vector3(0, 0, 0));
+
+            animate();
+        }
+
+        function createFlashyBackground() {
+            const starGeo = new THREE.BufferGeometry();
+            const starPos = [];
+            const starSizes = [];
+            for (let i = 0; i < 10000; i++) {
+                starPos.push((Math.random() - 0.5) * 1200, (Math.random() - 0.2) * 800, (Math.random() - 0.5) * 1200);
+                starSizes.push(Math.random());
+            }
+            starGeo.setAttribute('position', new THREE.Float32BufferAttribute(starPos, 3));
+            starGeo.setAttribute('size', new THREE.Float32BufferAttribute(starSizes, 1));
+            
+            const starMat = new THREE.PointsMaterial({ 
+                color: 0xffffff, 
+                size: 0.8, 
+                transparent: true, 
+                opacity: 0.8,
+                blending: THREE.AdditiveBlending 
+            });
+            starField = new THREE.Points(starGeo, starMat);
+            scene.add(starField);
+
+            const nebulaCount = 6;
+            nebulaParticles = new THREE.Group();
+            for(let j=0; j<nebulaCount; j++) {
+                const nGeo = new THREE.BufferGeometry();
+                const nPos = [];
+                const nCols = [];
+                const color = new THREE.Color();
+                color.setHSL(0.5 + Math.random() * 0.4, 0.7, 0.4);
+
+                for (let i = 0; i < 600; i++) {
+                    nPos.push((Math.random() - 0.5) * 150, (Math.random() - 0.5) * 60, (Math.random() - 0.5) * 150);
+                    nCols.push(color.r, color.g, color.b);
+                }
+                nGeo.setAttribute('position', new THREE.Float32BufferAttribute(nPos, 3));
+                nGeo.setAttribute('color', new THREE.Float32BufferAttribute(nCols, 3));
+                
+                const nMat = new THREE.PointsMaterial({ 
+                    size: 2.0, 
+                    vertexColors: true, 
+                    transparent: true, 
+                    opacity: 0.1, 
+                    blending: THREE.AdditiveBlending 
+                });
+                const cloud = new THREE.Points(nGeo, nMat);
+                cloud.position.set((Math.random()-0.5)*300, 30 + Math.random()*40, (Math.random()-0.5)*300);
+                cloud.userData = { speed: 0.0005 + Math.random()*0.001 };
+                nebulaParticles.add(cloud);
+            }
+            scene.add(nebulaParticles);
+
+            const shootGeo = new THREE.BufferGeometry();
+            shootGeo.setAttribute('position', new THREE.Float32BufferAttribute([0,0,0, 0,0,0], 3));
+            shootingStar = new THREE.Line(shootGeo, new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0 }));
+            scene.add(shootingStar);
+        }
+
+        function createGround() {
+            const groundGeo = new THREE.CircleGeometry(250, 64);
+            const groundMat = new THREE.MeshStandardMaterial({ 
+                color: 0x050805, 
+                roughness: 0.9, 
+                metalness: 0.1 
+            });
+            const ground = new THREE.Mesh(groundGeo, groundMat);
+            ground.rotation.x = -Math.PI / 2;
+            ground.name = "ground";
+            scene.add(ground);
+        }
+
+        function createGrass() {
+            // High-performance Instanced Mesh approach would be better, 
+            // but for visual variety and simple logic we'll use a grouped batch.
+            const grassCount = 25000;
+            const grassGeo = new THREE.PlaneGeometry(0.1, 0.6, 1, 4);
+            // Move origin to bottom of blade
+            grassGeo.translate(0, 0.3, 0); 
+            
+            const grassMat = new THREE.MeshStandardMaterial({ 
+                color: 0x113311, 
+                side: THREE.DoubleSide,
+                alphaTest: 0.5
+            });
+
+            const instancedGrass = new THREE.InstancedMesh(grassGeo, grassMat, grassCount);
+            const dummy = new THREE.Object3D();
+
+            for (let i = 0; i < grassCount; i++) {
+                // Random position within circle
+                const angle = Math.random() * Math.PI * 2;
+                const radius = Math.sqrt(Math.random()) * 80;
+                dummy.position.set(Math.cos(angle) * radius, 0, Math.sin(angle) * radius);
+                
+                dummy.rotation.y = Math.random() * Math.PI;
+                dummy.rotation.x = (Math.random() - 0.5) * 0.2;
+                dummy.scale.setScalar(0.5 + Math.random() * 1.5);
+                
+                dummy.updateMatrix();
+                instancedGrass.setMatrixAt(i, dummy.matrix);
+            }
+            
+            scene.add(instancedGrass);
+            grassBlades = instancedGrass;
+        }
+
+        function createFlower(pos) {
+            const flowerGroup = new THREE.Group();
+            flowerGroup.position.copy(pos);
+            scene.add(flowerGroup);
+
+            const stemH = 5 + Math.random() * 7;
+            const color = new THREE.Color().setHSL(Math.random(), 0.9, 0.6);
+
+            const points = [];
+            const segments = 10;
+            for (let i = 0; i <= segments; i++) {
+                const y = (i / segments) * stemH;
+                const x = i === 0 ? 0 : (Math.random() - 0.5) * (i * 0.5);
+                const z = i === 0 ? 0 : (Math.random() - 0.5) * (i * 0.5);
+                points.push(new THREE.Vector3(x, y, z));
+            }
+            const curve = new THREE.CatmullRomCurve3(points);
+            const stemGeo = new THREE.TubeGeometry(curve, 40, 0.12, 12, false);
+            const stemMat = new THREE.MeshStandardMaterial({ color: 0x0f2a0f, roughness: 0.8 });
+            const stem = new THREE.Mesh(stemGeo, stemMat);
+            stem.scale.set(1, 0.01, 1);
+            flowerGroup.add(stem);
+
+            const leaves = [];
+            const leafCount = 2 + Math.floor(Math.random() * 2);
+            for (let i = 0; i < leafCount; i++) {
+                const lShape = new THREE.Shape();
+                lShape.moveTo(0, 0);
+                lShape.bezierCurveTo(0.6, 0.3, 0.9, 1.4, 0, 2.0);
+                lShape.bezierCurveTo(-0.9, 1.4, -0.6, 0.3, 0, 0);
+
+                const extrudeSettings = { depth: 0.05, bevelEnabled: true, bevelThickness: 0.05, bevelSize: 0.05, bevelSegments: 3 };
+                const leafGeo = new THREE.ExtrudeGeometry(lShape, extrudeSettings);
+                const leaf = new THREE.Mesh(leafGeo, new THREE.MeshStandardMaterial({ color: 0x143a14, roughness: 0.7 }));
+                
+                const t = 0.2 + (i / leafCount) * 0.5;
+                const leafPos = curve.getPoint(t);
+                leaf.position.copy(leafPos);
+                leaf.rotation.z = (Math.random() - 0.5) * 1;
+                leaf.rotation.y = Math.random() * Math.PI * 2;
+                leaf.rotation.x = 1.0; 
+                leaf.scale.setScalar(0.01);
+                
+                flowerGroup.add(leaf);
+                leaves.push({ mesh: leaf, targetScale: 0.5 + Math.random() * 0.5 });
+            }
+
+            const head = new THREE.Group();
+            head.position.copy(points[points.length - 1]);
+            flowerGroup.add(head);
+
+            const petals = [];
+            const layers = 4;
+            for (let l = 0; l < layers; l++) {
+                const count = 12 + l * 2;
+                for (let i = 0; i < count; i++) {
+                    const pShape = new THREE.Shape();
+                    pShape.moveTo(0, 0);
+                    pShape.bezierCurveTo(0.9, 0.3, 0.8, 2.5, 0, 2.8);
+                    pShape.bezierCurveTo(-0.8, 2.5, -0.9, 0.3, 0, 0);
+
+                    const pExtrude = { depth: 0.02, bevelEnabled: true, bevelThickness: 0.08, bevelSize: 0.08, bevelSegments: 5 };
+                    const petalGeo = new THREE.ExtrudeGeometry(pShape, pExtrude);
+                    
+                    const posAttr = petalGeo.attributes.position;
+                    for(let j=0; j<posAttr.count; j++) {
+                        let py = posAttr.getY(j);
+                        let px = posAttr.getX(j);
+                        posAttr.setZ(j, posAttr.getZ(j) + (py * py * 0.15) - (px * px * 0.1));
+                    }
+
+                    const petal = new THREE.Mesh(
+                        petalGeo,
+                        new THREE.MeshStandardMaterial({
+                            color: color,
+                            emissive: color,
+                            emissiveIntensity: 0.4,
+                            transparent: true,
+                            opacity: 0,
+                            roughness: 0.4
+                        })
+                    );
+                    petal.rotation.z = (i / count) * Math.PI * 2;
+                    petal.rotation.x = 1.5; 
+                    petal.userData = {
+                        targetX: 0.2 + (l * 0.45),
+                        delay: 40 + (l * 12) + (i * 2)
+                    };
+                    head.add(petal);
+                    petals.push(petal);
+                }
+            }
+
+            const core = new THREE.Mesh(
+                new THREE.SphereGeometry(0.5, 32, 32),
+                new THREE.MeshStandardMaterial({ color: 0xffdd00, emissive: 0xffaa00, emissiveIntensity: 2.5 })
+            );
+            head.add(core);
+            
+            const ring = new THREE.Mesh(
+                new THREE.TorusGeometry(0.45, 0.1, 16, 50),
+                new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0xffffff, emissiveIntensity: 1 })
+            );
+            ring.rotation.x = Math.PI/2;
+            head.add(ring);
+
+            const light = new THREE.PointLight(color, 0, 25);
+            head.add(light);
+
+            flowers.push({ head, stem, leaves, petals, light, age: 0 });
+        }
+
+        function triggerShootingStar() {
+            const startX = (Math.random()-0.5)*500;
+            const startY = 150 + Math.random()*100;
+            const startZ = -300 - Math.random()*200;
+            const positions = new Float32Array([startX, startY, startZ, startX + 60, startY - 40, startZ + 30]);
+            shootingStar.geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+            shootingStar.material.opacity = 1;
+            setTimeout(() => { shootingStar.material.opacity = 0; }, 350);
+        }
+
+        function onPointer(e) {
+            mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+            raycaster.setFromCamera(mouse, camera);
+            const hits = raycaster.intersectObjects(scene.children);
+            const ground = hits.find(h => h.object.name === "ground");
+            if (ground) createFlower(ground.point);
+        }
+
+        function onResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            const t = clock.getElapsedTime();
+            controls.update();
+
+            if (starField) {
+                starField.rotation.y += 0.00008;
+                starField.material.opacity = 0.7 + Math.sin(t * 1.5) * 0.2;
+            }
+
+            nebulaParticles.children.forEach(cloud => {
+                cloud.rotation.y += cloud.userData.speed;
+                cloud.position.y += Math.sin(t * 0.5 + cloud.position.x) * 0.01;
+            });
+
+            // Gentle grass sway
+            if (grassBlades) {
+                grassBlades.rotation.x = Math.sin(t * 0.8) * 0.05;
+                grassBlades.rotation.z = Math.cos(t * 0.5) * 0.05;
+            }
+
+            if(Math.random() < 0.008) triggerShootingStar();
+
+            flowers.forEach(f => {
+                f.age++;
+                if (f.age < 60) {
+                    const progress = f.age / 60;
+                    f.stem.scale.y = progress;
+                    f.head.scale.setScalar(progress);
+                    f.leaves.forEach(l => {
+                        const s = progress * l.targetScale;
+                        l.mesh.scale.set(s, s, s);
+                    });
+                }
+                
+                f.head.lookAt(camera.position);
+
+                if (f.age > 60) {
+                    f.petals.forEach(p => {
+                        if (f.age > p.userData.delay) {
+                            p.material.opacity = Math.min(1, p.material.opacity + 0.08);
+                            if (p.rotation.x > p.userData.targetX) p.rotation.x -= 0.025;
+                        }
+                    });
+                    f.light.intensity = Math.min(5, f.light.intensity + 0.15);
+                }
+            });
+
+            renderer.render(scene, camera);
+        }
+
+        init();
+    <\/script>
+</body>
+</html>`;
+  document.getElementById('garden-frame').srcdoc = GARDEN_HTML;
+
+  document.getElementById('btn-replay').addEventListener('click', ()=>{
+    document.getElementById('opening-lines').innerHTML = '';
+    document.getElementById('birthday-panel').classList.remove('show');
+    panelShown = false;
+    goTo('scene-opening');
+    runOpening();
+  });
+
+})();
+</script>
+</body>
+</html>
