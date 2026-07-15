@@ -108,14 +108,17 @@ button{font-family:inherit;background:none;border:none;color:inherit;cursor:poin
 .glass-btn:hover{background:rgba(212,175,55,.15); box-shadow:0 0 30px rgba(212,175,55,.25); letter-spacing:.4em;}
 
 /* ============ SCENE 1 — OPENING ============ */
+#opening-lines{position:absolute; inset:0;}
 #scene-opening .line{
-  position:absolute; font-family:'Cormorant Garamond',serif; font-style:italic;
-  font-size:clamp(28px,5vw,54px); color:var(--gold-soft); opacity:0;
-  line-height:1.3;
+  position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+  width:max-content; max-width:88vw;
+  font-family:'Cormorant Garamond',serif; font-style:italic;
+  font-size:clamp(26px,6vw,54px); color:var(--gold-soft); opacity:0;
+  line-height:1.35; text-align:center;
 }
 #scene-opening .line.reveal{
   font-style:normal; letter-spacing:.15em; color:var(--gold);
-  font-size:clamp(52px,11vw,120px); text-shadow:0 0 40px rgba(212,175,55,.4);
+  font-size:clamp(46px,13vw,120px); text-shadow:0 0 40px rgba(212,175,55,.4);
 }
 
 /* ============ SCENE — ENCHANTED GARDEN (iframe) ============ */
@@ -151,6 +154,19 @@ button{font-family:inherit;background:none;border:none;color:inherit;cursor:poin
 .glass-panel p{
   font-family:'Montserrat',sans-serif; font-weight:300; font-size:clamp(14px,1.8vw,16px);
   line-height:1.85; color:var(--ivory); text-align:left; margin-bottom:16px;
+}
+.glass-panel .ps-divider{
+  width:56px; height:1px; margin:22px auto 20px;
+  background:linear-gradient(90deg, transparent, rgba(212,175,55,.6), transparent);
+}
+.glass-panel p.ps{
+  font-style:italic; color:var(--gold-soft); text-align:left;
+  font-size:clamp(13px,1.7vw,15px); line-height:1.8;
+}
+.glass-panel p.wishes{
+  font-family:'Cormorant Garamond',serif; font-style:italic; color:var(--gold);
+  text-align:center; font-size:clamp(16px,2.2vw,20px); margin-top:18px; margin-bottom:4px;
+  text-shadow:0 0 18px rgba(212,175,55,.3);
 }
 .glass-close{
   position:absolute; top:14px; right:14px; width:40px; height:40px; z-index:2;
@@ -201,14 +217,16 @@ button{font-family:inherit;background:none;border:none;color:inherit;cursor:poin
       <div class="glass-panel-inner">
         <button class="glass-close" id="birthday-panel-close" aria-label="Close message">&times;</button>
         <h3>Happy Birthday, Aathika!! 🥳🎉</h3>
-        <p>Congratulations on becoming even older. I know you're going to remind me for the next 365 days that you're older than me, wiser than me, and somehow always right... even when you're very obviously not. 😉🤣</p>
-        <p>I genuinely don't think I've ever met someone who hates losing as much as you do. You could lose an argument that you started, with proof right in front of you, and you'd still find a way to say, "No, actually..." which is a good thing if you take it in one way 😂</p>
-        <p>I hope this year brings you everything your expensive taste demands—more jewelry, more makeup, more cars to obsess over, and maybe Ferrari making the right strategy for once. 🤣🤣🤣</p>
-        <p>Thanks for always being the most appreciative person I know.</p>
+        <p>Congratulations on becoming even older. I know you're going to remind me that for the next eternity that you're older than me, wiser than me, and somehow always right... even when you're very obviously not. 😉🤣</p>
+        <p>I genuinely don't think I've ever met someone who hates giving up as much as you do. You could lose an argument that you started, with proof right in front of you, and you'd still find a way to say, "No, actually..." which is a good thing if you take it in one way 😂</p>
+        <p>I hope this year brings you everything your expensive taste demands; more jewelry, more makeup, more cars to obsess over, and maybe Ferrari making the right strategy for once. 🤣🤣🤣</p>
+        <p>Thanks for always being the most appreciative person I know.🫂💗</p>
         <p>You're honestly like the annoying older sister I never asked for... but wouldn't trade for anything.</p>
-        <p>Have the best birthday, old lady. ❤️😂</p>
-        <p>Now go enjoy your day... and before you say it</p>
+        <p>Now go enjoy your day old lady... and before you say it</p>
         <p>Yes, yes... I know you're older than me. You don't have to remind me for the 1000th time. 🙄🎂🏁</p>
+        <div class="ps-divider"></div>
+        <p class="ps">ps: you'ld make a great doctor one day!!! 👩‍⚕️🩺 anddd never stop working towards your dreams cause that yatch is not a fantasy if other people actually do have it ✨</p>
+        <p class="wishes">✨✨ Best wishes mate, have the best birthday everrrrrrrrr 🥳🥳🎂🎂</p>
       </div>
     </div>
   </section>
@@ -279,12 +297,34 @@ button{font-family:inherit;background:none;border:none;color:inherit;cursor:poin
   const bgMusic = document.getElementById('bg-music');
   bgMusic.volume = 0.55;
   const soundBtn = document.getElementById('sound-toggle');
+  soundBtn.classList.add('show');
+
+  function setSoundUI(on){
+    soundOn = on;
+    soundBtn.style.opacity = soundOn ? 1 : .55;
+    soundBtn.textContent = soundOn ? '♪' : '♪̶';
+  }
+
+  function tryAutoplay(){
+    const p = bgMusic.play();
+    if(p !== undefined){
+      p.then(()=> setSoundUI(true)).catch(()=>{
+        // Autoplay blocked — start on the very first interaction instead
+        const startOnInteract = ()=>{
+          bgMusic.play().then(()=> setSoundUI(true)).catch(()=>{});
+          ['click','touchstart','keydown'].forEach(evt=> document.removeEventListener(evt, startOnInteract));
+        };
+        ['click','touchstart','keydown'].forEach(evt=> document.addEventListener(evt, startOnInteract, {once:true}));
+      });
+    }
+  }
+  tryAutoplay();
+
   soundBtn.addEventListener('click', ()=>{
     soundOn = !soundOn;
     if(soundOn){ bgMusic.play().catch(()=>{}); }
     else { bgMusic.pause(); }
-    soundBtn.style.opacity = soundOn ? 1 : .55;
-    soundBtn.textContent = soundOn ? '♪' : '♪̶';
+    setSoundUI(soundOn);
   });
 
   /* ---------------- SCENE MACHINE ---------------- */
@@ -295,7 +335,7 @@ button{font-family:inherit;background:none;border:none;color:inherit;cursor:poin
     document.getElementById(current).classList.remove('active');
     current = id;
     document.getElementById(current).classList.add('active');
-    if(id === 'scene-garden'){ showBirthdayPanel(); soundBtn.classList.add('show'); }
+    if(id === 'scene-garden'){ showBirthdayPanel(); }
   }
 
   /* ---------------- 0: OPENING (runs immediately, no loading screen) ---------------- */
@@ -304,13 +344,13 @@ button{font-family:inherit;background:none;border:none;color:inherit;cursor:poin
   function runOpening(){
     const host = document.getElementById('opening-lines');
     const seq = [
-      {t:"Midnight...<br>has arrived.", hold:2600},
-      {t:"A new chapter...<br>begins.", hold:2600},
-      {t:"JULY 17", hold:2000},
-      {t:"Happy Birthday,", hold:2000},
-      {t:"AATHIKA", hold:3200, big:true}
+      {t:"Midnight...<br>has arrived.", hold:3600},
+      {t:"A new chapter...<br>begins.", hold:3600},
+      {t:"JULY 17", hold:2800},
+      {t:"Happy Birthday,", hold:2800},
+      {t:"AATHIKA", hold:4200, big:true}
     ];
-    let delay = 400;
+    let delay = 500;
     seq.forEach((line,i)=>{
       setTimeout(()=>{
         host.querySelectorAll('.line').forEach(l=>l.style.opacity=0);
@@ -318,11 +358,11 @@ button{font-family:inherit;background:none;border:none;color:inherit;cursor:poin
         div.className = 'line' + (line.big ? ' reveal' : '');
         div.innerHTML = line.t;
         host.appendChild(div);
-        requestAnimationFrame(()=>{ div.style.transition='opacity 1.6s ease'; div.style.opacity=1; });
+        requestAnimationFrame(()=>{ div.style.transition='opacity 2.6s ease'; div.style.opacity=1; });
       }, delay);
       delay += line.hold;
     });
-    setTimeout(()=> goTo('scene-garden'), delay + 800);
+    setTimeout(()=> goTo('scene-garden'), delay + 1000);
   }
 
   /* ---------------- LIQUID GLASS BIRTHDAY PANEL ---------------- */
