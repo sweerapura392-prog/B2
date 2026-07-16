@@ -2,7 +2,11 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#050303">
 <title>The World of Aathika</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -28,9 +32,12 @@ html,body{
   font-family:'Montserrat',sans-serif;
   font-weight:300;
   overflow:hidden;
+  overscroll-behavior:none;
   height:100%;
+  height:100dvh;
   width:100%;
   letter-spacing:.02em;
+  -webkit-text-size-adjust:none; text-size-adjust:none;
 }
 h1,h2,h3,.serif{
   font-family:'Cormorant Garamond',serif;
@@ -137,6 +144,7 @@ button{font-family:inherit;background:none;border:none;color:inherit;cursor:poin
 .glass-panel.show{opacity:1; pointer-events:auto; visibility:visible; transform:translate(-50%,-50%) scale(1); transition:opacity .9s var(--ease), transform .9s var(--ease);}
 .glass-panel-inner{
   position:relative; height:100%; max-height:calc(82vh - 4px); overflow-y:auto;
+  -webkit-overflow-scrolling:touch;
   border-radius:24px; padding:clamp(28px,5vw,46px) clamp(24px,5vw,40px);
   background:linear-gradient(160deg, rgba(74,15,24,.62), rgba(5,3,3,.72));
   backdrop-filter:blur(22px) saturate(160%);
@@ -216,16 +224,16 @@ button{font-family:inherit;background:none;border:none;color:inherit;cursor:poin
     <div class="glass-panel" id="birthday-panel">
       <div class="glass-panel-inner">
         <button class="glass-close" id="birthday-panel-close" aria-label="Close message">&times;</button>
-        <h3>Happy Birthday, Aathika!! 🥳🎉</h3>
+        <h3>Happy Birthday, Aathika!!! 🥳🎉</h3>
         <p>Congratulations on becoming even older. I know you're going to remind me that for the next eternity that you're older than me, wiser than me, and somehow always right... even when you're very obviously not. 😉🤣</p>
         <p>I genuinely don't think I've ever met someone who hates giving up as much as you do. You could lose an argument that you started, with proof right in front of you, and you'd still find a way to say, "No, actually..." which is a good thing if you take it in one way 😂</p>
         <p>I hope this year brings you everything your expensive taste demands; more jewelry, more makeup, more cars to obsess over, and maybe Ferrari making the right strategy for once. 🤣🤣🤣</p>
-        <p>Thanks for always being the most appreciative person I know.🫂💗</p>
+        <p>Thankyou for always being the most appreciative person I know.🫂💗</p>
         <p>You're honestly like the annoying older sister I never asked for... but wouldn't trade for anything.</p>
         <p>Now go enjoy your day old lady... and before you say it</p>
         <p>Yes, yes... I know you're older than me. You don't have to remind me for the 1000th time. 🙄🎂🏁</p>
         <div class="ps-divider"></div>
-        <p class="ps">ps: you'ld make a great doctor one day!!! 👩‍⚕️🩺 anddd never stop working towards your dreams cause that yatch is not a fantasy if other people actually do have it ✨</p>
+        <p class="ps">ps: you'ld make a great doctor one day!!! 👩‍⚕️🩺 never stop working towards your dreams cause that yatch is not a fantasy if other people actually do have it ✨</p>
         <p class="wishes">✨✨ Best wishes mate, have the best birthday everrrrrrrrr 🥳🥳🎂🎂</p>
       </div>
     </div>
@@ -348,7 +356,7 @@ button{font-family:inherit;background:none;border:none;color:inherit;cursor:poin
       {t:"A new chapter...<br>begins.", hold:3600},
       {t:"JULY 17", hold:2800},
       {t:"Happy Birthday,", hold:2800},
-      {t:"AATHIKA", hold:4200, big:true}
+      {t:"AATHIKA!!!", hold:4200, big:true}
     ];
     let delay = 500;
     seq.forEach((line,i)=>{
